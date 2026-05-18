@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="id" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QR Generator Pro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&display=swap" rel="stylesheet">
+<!-- qr-creator for raw QR matrix access -->
+<script src="https://cdn.jsdelivr.net/npm/qr-creator@1.0.0/dist/qr-creator.min.js"></script>
+<style>
+:root,[data-theme="light"]{
+  --bg:#f7f6f2;--surface:#f9f8f5;--surface-2:#fbfbf9;--surface-off:#f3f0ec;
+  --border:rgba(40,37,29,0.12);--divider:#dcd9d5;
+  --text:#28251d;--text-muted:#7a7974;--text-faint:#bab9b4;
+  --primary:#01696f;--primary-h:#0c4e54;--primary-a:#0f3638;--primary-hl:#cedcd8;
+  --error:#a12c7b;--success:#437a22;--warn:#964219;
+  --r-sm:.375rem;--r-md:.5rem;--r-lg:.75rem;--r-xl:1rem;--r-full:9999px;
+  --shadow-sm:0 1px 2px oklch(0.2 0.01 80/.06);
+  --shadow-md:0 4px 12px oklch(0.2 0.01 80/.08);
+  --shadow-lg:0 12px 32px oklch(0.2 0.01 80/.12);
+  --t:180ms cubic-bezier(0.16,1,0.3,1);
+  --font:'Geist','Inter',sans-serif;
+  --xs:clamp(.75rem,.7rem + .25vw,.875rem);--sm:clamp(.875rem,.8rem + .35vw,1rem);
+  --base:clamp(1rem,.95rem + .25vw,1.125rem);--lg:clamp(1.125rem,1rem + .75vw,1.5rem);
+  --xl:clamp(1.5rem,1.2rem + 1.25vw,2.25rem);--2xl:clamp(2rem,1.2rem + 2.5vw,3.5rem);
+  --s1:.25rem;--s2:.5rem;--s3:.75rem;--s4:1rem;--s5:1.25rem;--s6:1.5rem;
+  --s8:2rem;--s10:2.5rem;--s12:3rem;--s16:4rem;
+}
+[data-theme="dark"]{
+  --bg:#171614;--surface:#1c1b19;--surface-2:#201f1d;--surface-off:#2d2c2a;
+  --border:rgba(205,204,202,0.1);--divider:#262523;
+  --text:#cdccca;--text-muted:#797876;--text-faint:#5a5957;
+  --primary:#4f98a3;--primary-h:#227f8b;--primary-a:#1a626b;--primary-hl:#313b3b;
+  --error:#d163a7;--success:#6daa45;--warn:#bb653b;
+  --shadow-sm:0 1px 2px oklch(0 0 0/.2);
+  --shadow-md:0 4px 12px oklch(0 0 0/.3);
+  --shadow-lg:0 12px 32px oklch(0 0 0/.4);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+body{min-height:100dvh;font-family:var(--font);font-size:var(--base);color:var(--text);background:var(--bg);display:flex;flex-direction:column;align-items:center;transition:background var(--t),color var(--t)}
+button{cursor:pointer;background:none;border:none;font:inherit;color:inherit}
+input,textarea,select{font:inherit;color:inherit}
+img{display:block;max-width:100%}
+
+/* HEADER */
+header{width:100%;padding:var(--s4) var(--s6);display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:10;backdrop-filter:blur(8px)}
+.logo{display:flex;align-items:center;gap:var(--s2);font-size:var(--sm);font-weight:700;color:var(--text);text-decoration:none}
+.logo-icon{color:var(--primary)}
+.header-right{display:flex;align-items:center;gap:var(--s2)}
+.icon-btn{width:36px;height:36px;border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;color:var(--text-muted);border:1px solid var(--border);transition:color var(--t),background var(--t)}
+.icon-btn:hover{color:var(--text);background:var(--surface-off)}
+.badge-pro{font-size:var(--xs);font-weight:600;background:linear-gradient(135deg,#f59e0b,#ef4444);color:#fff;padding:2px 8px;border-radius:var(--r-full);letter-spacing:.02em}
+
+/* MAIN LAYOUT */
+main{width:100%;max-width:1100px;padding:var(--s8) var(--s6);display:grid;grid-template-columns:1fr 400px;gap:var(--s8);align-items:start}
+@media(max-width:860px){main{grid-template-columns:1fr;padding:var(--s5) var(--s4)}}
+
+/* PANEL LEFT */
+.panel-left{display:flex;flex-direction:column;gap:var(--s6)}
+
+/* HERO */
+.hero{display:flex;flex-direction:column;gap:var(--s2)}
+.hero-tag{display:inline-flex;align-items:center;gap:var(--s2);font-size:var(--xs);font-weight:600;color:var(--primary);background:var(--primary-hl);padding:3px 10px;border-radius:var(--r-full);letter-spacing:.04em;text-transform:uppercase;width:fit-content}
+.hero h1{font-size:var(--xl);font-weight:700;letter-spacing:-.02em;line-height:1.15}
+.hero p{font-size:var(--sm);color:var(--text-muted);max-width:50ch}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:var(--s6);box-shadow:var(--shadow-sm);display:flex;flex-direction:column;gap:var(--s5)}
+.card-title{font-size:var(--sm);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;gap:var(--s2)}
+.card-title svg{color:var(--primary)}
+
+/* FORM */
+.form-group{display:flex;flex-direction:column;gap:var(--s2)}
+label{font-size:var(--xs);font-weight:500;color:var(--text-muted)}
+textarea,input[type="text"]{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--s3) var(--s4);font-size:var(--sm);color:var(--text);resize:vertical;transition:border-color var(--t),box-shadow var(--t);width:100%}
+textarea{min-height:110px}
+textarea:focus,input[type="text"]:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in oklch,var(--primary) 15%,transparent)}
+.char-count{font-size:var(--xs);color:var(--text-faint);text-align:right}
+.char-count.warn{color:var(--error)}
+
+/* OPTIONS GRID */
+.opt-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--s4)}
+.opt-full{grid-column:1/-1}
+.opt-group{display:flex;flex-direction:column;gap:var(--s2)}
+.opt-label{font-size:var(--xs);font-weight:500;color:var(--text-muted);text-transform:uppercase;letter-spacing:.04em}
+
+select{background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--s2) var(--s3);font-size:var(--sm);color:var(--text);cursor:pointer;transition:border-color var(--t);width:100%;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237a7974' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+select:focus{outline:none;border-color:var(--primary)}
+
+/* COLOR SWATCH */
+.color-wrap{display:flex;align-items:center;gap:var(--s2);background:var(--bg);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--s2) var(--s3);transition:border-color var(--t)}
+.color-wrap:focus-within{border-color:var(--primary)}
+input[type="color"]{width:22px;height:22px;border:2px solid var(--border);padding:0;background:none;cursor:pointer;border-radius:var(--r-sm);flex-shrink:0}
+.color-hex{font-size:var(--xs);font-weight:500;color:var(--text-muted);font-family:monospace;flex:1}
+
+/* GRADIENT ROW */
+.gradient-row{display:flex;align-items:center;gap:var(--s3)}
+.gradient-preview{height:28px;flex:1;border-radius:var(--r-sm);border:1px solid var(--border);transition:background .3s}
+.gradient-badge{font-size:var(--xs);color:var(--text-faint);white-space:nowrap}
+
+/* SHAPE PICKER */
+.shape-picker{display:grid;grid-template-columns:repeat(5,1fr);gap:var(--s2)}
+.shape-btn{aspect-ratio:1;border:2px solid var(--border);border-radius:var(--r-md);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;background:var(--bg);transition:border-color var(--t),background var(--t),color var(--t);padding:var(--s2);color:var(--text-muted);font-size:calc(var(--xs)*0.9)}
+.shape-btn svg{width:28px;height:28px}
+.shape-btn.active{border-color:var(--primary);background:var(--primary-hl);color:var(--primary)}
+.shape-btn:hover:not(.active){border-color:var(--primary-h);background:var(--surface-off)}
+
+/* EYE STYLE PICKER */
+.eye-picker{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s2)}
+.eye-btn{aspect-ratio:1;border:2px solid var(--border);border-radius:var(--r-md);display:flex;align-items:center;justify-content:center;cursor:pointer;background:var(--bg);transition:border-color var(--t),background var(--t);padding:var(--s3)}
+.eye-btn svg{width:32px;height:32px}
+.eye-btn.active{border-color:var(--primary);background:var(--primary-hl)}
+.eye-btn:hover:not(.active){border-color:var(--primary-h);background:var(--surface-off)}
+
+/* LOGO UPLOAD */
+.logo-upload-area{border:2px dashed var(--border);border-radius:var(--r-lg);padding:var(--s5);text-align:center;cursor:pointer;transition:border-color var(--t),background var(--t);background:var(--bg);display:flex;flex-direction:column;align-items:center;gap:var(--s2)}
+.logo-upload-area:hover{border-color:var(--primary);background:var(--primary-hl)}
+.logo-upload-area.has-logo{border-style:solid;border-color:var(--primary)}
+.logo-upload-area svg{color:var(--text-faint)}
+.logo-upload-area .upload-text{font-size:var(--sm);font-weight:500;color:var(--text-muted)}
+.logo-upload-area .upload-hint{font-size:var(--xs);color:var(--text-faint)}
+.logo-preview-row{display:flex;align-items:center;gap:var(--s3);margin-top:var(--s2)}
+.logo-thumb{width:48px;height:48px;border-radius:var(--r-md);border:1px solid var(--border);object-fit:contain;background:#fff;padding:4px}
+.logo-info{flex:1;display:flex;flex-direction:column;gap:2px}
+.logo-name{font-size:var(--sm);font-weight:500;color:var(--text)}
+.logo-size-hint{font-size:var(--xs);color:var(--text-faint)}
+.btn-remove-logo{font-size:var(--xs);color:var(--error);padding:2px 8px;border:1px solid var(--error);border-radius:var(--r-full);transition:background var(--t),color var(--t)}
+.btn-remove-logo:hover{background:var(--error);color:#fff}
+
+/* LOGO SIZE SLIDER */
+.slider-row{display:flex;align-items:center;gap:var(--s3)}
+input[type="range"]{flex:1;accent-color:var(--primary);cursor:pointer}
+.slider-val{font-size:var(--xs);font-weight:600;color:var(--primary);min-width:36px;text-align:right;font-family:monospace}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--divider)}
+
+/* BUTTONS */
+.btn-primary{background:var(--primary);color:#fff;border-radius:var(--r-md);padding:var(--s3) var(--s6);font-size:var(--sm);font-weight:600;display:inline-flex;align-items:center;gap:var(--s2);transition:background var(--t),box-shadow var(--t),transform var(--t);box-shadow:var(--shadow-sm);border:none;white-space:nowrap}
+.btn-primary:hover{background:var(--primary-h);box-shadow:var(--shadow-md);transform:translateY(-1px)}
+.btn-primary:active{background:var(--primary-a);transform:translateY(0)}
+.btn-secondary{background:transparent;color:var(--text-muted);border:1px solid var(--border);border-radius:var(--r-md);padding:var(--s3) var(--s4);font-size:var(--sm);font-weight:500;display:inline-flex;align-items:center;gap:var(--s2);transition:color var(--t),background var(--t),border-color var(--t)}
+.btn-secondary:hover{color:var(--text);background:var(--surface-off)}
+.btn-row{display:flex;gap:var(--s3);flex-wrap:wrap}
+
+/* PANEL RIGHT — PREVIEW */
+.panel-right{position:sticky;top:80px;display:flex;flex-direction:column;gap:var(--s5)}
+.preview-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-xl);padding:var(--s6);display:flex;flex-direction:column;align-items:center;gap:var(--s5);box-shadow:var(--shadow-md)}
+.qr-canvas-wrap{background:#fff;border-radius:var(--r-lg);padding:var(--s4);box-shadow:var(--shadow-lg);display:flex;align-items:center;justify-content:center;min-width:240px;min-height:240px;position:relative}
+#qr-placeholder{display:flex;flex-direction:column;align-items:center;gap:var(--s3);color:var(--text-faint)}
+#qr-placeholder p{font-size:var(--sm)}
+#qr-canvas{display:none;border-radius:var(--r-sm)}
+.qr-meta-info{text-align:center;display:flex;flex-direction:column;gap:var(--s1)}
+.qr-meta-label{font-size:var(--sm);font-weight:600;color:var(--text)}
+.qr-meta-sub{font-size:var(--xs);color:var(--text-muted)}
+.download-btns{display:grid;grid-template-columns:1fr 1fr;gap:var(--s2);width:100%}
+.download-btns .btn-primary,.download-btns .btn-secondary{justify-content:center}
+
+/* TOGGLE SWITCH */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:var(--s3)}
+.toggle-label{font-size:var(--sm);font-weight:500;color:var(--text)}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-track{position:absolute;inset:0;border-radius:var(--r-full);background:var(--border);cursor:pointer;transition:background var(--t)}
+.toggle input:checked+.toggle-track{background:var(--primary)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform var(--t);pointer-events:none}
+.toggle input:checked~.toggle-thumb{transform:translateX(18px)}
+
+/* SECTION COLLAPSE */
+.section-header{display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none}
+.section-body{overflow:hidden;transition:max-height .3s ease,opacity .3s ease}
+.section-body.collapsed{max-height:0!important;opacity:0}
+.chevron{transition:transform .3s ease;color:var(--text-faint)}
+.chevron.open{transform:rotate(180deg)}
+
+/* TOAST */
+.toast{position:fixed;bottom:var(--s6);left:50%;transform:translateX(-50%) translateY(20px);background:var(--text);color:var(--bg);padding:var(--s3) var(--s5);border-radius:var(--r-full);font-size:var(--sm);font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;white-space:nowrap;z-index:999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* FOOTER */
+footer{padding:var(--s6);text-align:center;font-size:var(--xs);color:var(--text-faint);border-top:1px solid var(--border);width:100%}
+
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <a href="#" class="logo">
+    <svg class="logo-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="7" height="7" rx="1.5"/>
+      <rect x="14" y="3" width="7" height="7" rx="1.5"/>
+      <rect x="3" y="14" width="7" height="7" rx="1.5"/>
+      <path d="M14 14h3v3h-3z"/><path d="M17 17h4v4h-4z"/>
+      <path d="M14 20v1"/><path d="M20 14v1"/>
+    </svg>
+    QR Generator Pro
+  </a>
+  <div class="header-right">
+    <span class="badge-pro">PRO</span>
+    <button class="icon-btn" data-theme-toggle aria-label="Toggle theme">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main>
+  <!-- LEFT PANEL -->
+  <div class="panel-left">
+    <div class="hero">
+      <div class="hero-tag">
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor"><circle cx="4" cy="4" r="4"/></svg>
+        Custom QR Designer
+      </div>
+      <h1>Buat QR Code<br>Sesuka Kamu</h1>
+      <p>Custom shape, gradient warna, logo di tengah, dan pilihan desain lainnya.</p>
+    </div>
+
+    <!-- CONTENT CARD -->
+    <div class="card">
+      <div class="card-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Konten
+      </div>
+      <div class="form-group">
+        <label for="qr-input">Teks / URL / Data</label>
+        <textarea id="qr-input" placeholder="Masukkan teks, URL (https://...), nomor WA (wa.me/628xx), email, dll..." maxlength="2000" autocomplete="off" spellcheck="false"></textarea>
+        <span class="char-count" id="char-count">0 / 2000 karakter</span>
+      </div>
+    </div>
+
+    <!-- SHAPE CARD -->
+    <div class="card">
+      <div class="section-header" onclick="toggleSection('shape')">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+          Bentuk Modul QR
+        </div>
+        <svg class="chevron open" id="chevron-shape" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg>
+      </div>
+      <div class="section-body" id="body-shape" style="max-height:400px;opacity:1">
+        <div class="shape-picker" id="shape-picker">
+          <button class="shape-btn active" data-shape="square" onclick="setShape('square',this)" title="Square">
+            <svg viewBox="0 0 28 28" fill="currentColor"><rect x="4" y="4" width="8" height="8"/><rect x="16" y="4" width="8" height="8"/><rect x="4" y="16" width="8" height="8"/><rect x="16" y="16" width="8" height="8"/></svg>
+            Square
+          </button>
+          <button class="shape-btn" data-shape="dot" onclick="setShape('dot',this)" title="Dot">
+            <svg viewBox="0 0 28 28" fill="currentColor"><circle cx="8" cy="8" r="4"/><circle cx="20" cy="8" r="4"/><circle cx="8" cy="20" r="4"/><circle cx="20" cy="20" r="4"/></svg>
+            Dot
+          </button>
+          <button class="shape-btn" data-shape="rounded" onclick="setShape('rounded',this)" title="Rounded">
+            <svg viewBox="0 0 28 28" fill="currentColor"><rect x="4" y="4" width="8" height="8" rx="2.5"/><rect x="16" y="4" width="8" height="8" rx="2.5"/><rect x="4" y="16" width="8" height="8" rx="2.5"/><rect x="16" y="16" width="8" height="8" rx="2.5"/></svg>
+            Rounded
+          </button>
+          <button class="shape-btn" data-shape="diamond" onclick="setShape('diamond',this)" title="Diamond">
+            <svg viewBox="0 0 28 28" fill="currentColor"><polygon points="8,4 12,8 8,12 4,8"/><polygon points="20,4 24,8 20,12 16,8"/><polygon points="8,16 12,20 8,24 4,20"/><polygon points="20,16 24,20 20,24 16,20"/></svg>
+            Diamond
+          </button>
+          <button class="shape-btn" data-shape="star" onclick="setShape('star',this)" title="Star">
+            <svg viewBox="0 0 28 28" fill="currentColor"><polygon points="8,4 9.2,7.2 12.5,7.2 9.9,9.2 10.9,12.5 8,10.6 5.1,12.5 6.1,9.2 3.5,7.2 6.8,7.2"/><polygon points="20,4 21.2,7.2 24.5,7.2 21.9,9.2 22.9,12.5 20,10.6 17.1,12.5 18.1,9.2 15.5,7.2 18.8,7.2"/><polygon points="8,16 9.2,19.2 12.5,19.2 9.9,21.2 10.9,24.5 8,22.6 5.1,24.5 6.1,21.2 3.5,19.2 6.8,19.2"/><polygon points="20,16 21.2,19.2 24.5,19.2 21.9,21.2 22.9,24.5 20,22.6 17.1,24.5 18.1,21.2 15.5,19.2 18.8,19.2"/></svg>
+            Star
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EYE CARD -->
+    <div class="card">
+      <div class="section-header" onclick="toggleSection('eye')">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Bentuk "Mata" QR
+        </div>
+        <svg class="chevron open" id="chevron-eye" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg>
+      </div>
+      <div class="section-body" id="body-eye" style="max-height:400px;opacity:1">
+        <div class="eye-picker" id="eye-picker">
+          <button class="eye-btn active" data-eye="square" onclick="setEye('square',this)" title="Square Eye">
+            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.5">
+              <rect x="4" y="4" width="32" height="32"/><rect x="10" y="10" width="20" height="20"/><rect x="15" y="15" width="10" height="10" fill="currentColor" stroke="none"/>
+            </svg>
+          </button>
+          <button class="eye-btn" data-eye="rounded" onclick="setEye('rounded',this)" title="Rounded Eye">
+            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.5">
+              <rect x="4" y="4" width="32" height="32" rx="7"/><rect x="10" y="10" width="20" height="20" rx="4"/><rect x="15" y="15" width="10" height="10" rx="2" fill="currentColor" stroke="none"/>
+            </svg>
+          </button>
+          <button class="eye-btn" data-eye="circle" onclick="setEye('circle',this)" title="Circle Eye">
+            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.5">
+              <circle cx="20" cy="20" r="16"/><circle cx="20" cy="20" r="10"/><circle cx="20" cy="20" r="5" fill="currentColor" stroke="none"/>
+            </svg>
+          </button>
+          <button class="eye-btn" data-eye="leaf" onclick="setEye('leaf',this)" title="Leaf Eye">
+            <svg viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M4 4 Q4 36 36 36 Q36 4 4 4Z"/><path d="M10 10 Q10 30 30 30 Q30 10 10 10Z"/><path d="M15 15 Q15 25 25 25 Q25 15 15 15Z" fill="currentColor" stroke="none"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLOR CARD -->
+    <div class="card">
+      <div class="section-header" onclick="toggleSection('color')">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="6.5" cy="13.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/><path d="M12 20a8 8 0 1 0-8-8"/></svg>
+          Warna & Gradien
+        </div>
+        <svg class="chevron open" id="chevron-color" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg>
+      </div>
+      <div class="section-body" id="body-color" style="max-height:600px;opacity:1">
+        <div style="display:flex;flex-direction:column;gap:var(--s4);padding-top:var(--s2)">
+          <div class="toggle-row">
+            <span class="toggle-label">Aktifkan Gradien</span>
+            <label class="toggle">
+              <input type="checkbox" id="use-gradient" onchange="toggleGradient()">
+              <div class="toggle-track"></div>
+              <div class="toggle-thumb"></div>
+            </label>
+          </div>
+
+          <div class="opt-grid">
+            <div class="opt-group" id="solid-color-section">
+              <div class="opt-label">Warna QR</div>
+              <div class="color-wrap">
+                <input type="color" id="qr-color" value="#000000">
+                <span class="color-hex" id="qr-color-hex">#000000</span>
+              </div>
+            </div>
+            <div class="opt-group">
+              <div class="opt-label">Warna Latar</div>
+              <div class="color-wrap">
+                <input type="color" id="bg-color" value="#ffffff">
+                <span class="color-hex" id="bg-color-hex">#ffffff</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="gradient-section" style="display:none;flex-direction:column;gap:var(--s3)">
+            <div class="opt-grid">
+              <div class="opt-group">
+                <div class="opt-label">Warna Gradien 1</div>
+                <div class="color-wrap">
+                  <input type="color" id="grad-color1" value="#6366f1">
+                  <span class="color-hex" id="grad-color1-hex">#6366f1</span>
+                </div>
+              </div>
+              <div class="opt-group">
+                <div class="opt-label">Warna Gradien 2</div>
+                <div class="color-wrap">
+                  <input type="color" id="grad-color2" value="#ec4899">
+                  <span class="color-hex" id="grad-color2-hex">#ec4899</span>
+                </div>
+              </div>
+            </div>
+            <div class="opt-group">
+              <div class="opt-label">Arah Gradien</div>
+              <select id="grad-direction">
+                <option value="lr">Kiri ke Kanan</option>
+                <option value="tb">Atas ke Bawah</option>
+                <option value="diag">Diagonal</option>
+                <option value="radial">Radial (dari tengah)</option>
+              </select>
+            </div>
+            <div class="gradient-row">
+              <span class="gradient-badge">Preview:</span>
+              <div class="gradient-preview" id="gradient-preview"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOGO CARD -->
+    <div class="card">
+      <div class="section-header" onclick="toggleSection('logo')">
+        <div class="card-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          Logo di Tengah
+        </div>
+        <svg class="chevron open" id="chevron-logo" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m18 15-6-6-6 6"/></svg>
+      </div>
+      <div class="section-body" id="body-logo" style="max-height:500px;opacity:1">
+        <div style="display:flex;flex-direction:column;gap:var(--s4);padding-top:var(--s2)">
+          <div class="logo-upload-area" id="logo-upload-area" onclick="document.getElementById('logo-file').click()">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            <div class="upload-text" id="upload-text">Klik untuk upload logo</div>
+            <div class="upload-hint">PNG / SVG / JPG · Transparan lebih bagus</div>
+          </div>
+          <input type="file" id="logo-file" accept="image/*" style="display:none" onchange="handleLogoUpload(event)">
+
+          <div id="logo-preview-wrap" style="display:none">
+            <div class="logo-preview-row">
+              <img id="logo-thumb" class="logo-thumb" alt="Logo preview">
+              <div class="logo-info">
+                <span class="logo-name" id="logo-filename">-</span>
+                <span class="logo-size-hint">Logo akan muncul di tengah QR</span>
+              </div>
+              <button class="btn-remove-logo" onclick="removeLogo()">Hapus</button>
+            </div>
+          </div>
+
+          <div id="logo-size-section" style="display:none;flex-direction:column;gap:var(--s2)">
+            <div class="opt-label">Ukuran Logo</div>
+            <div class="slider-row">
+              <input type="range" id="logo-size" min="10" max="35" value="20" oninput="updateLogoSize(this.value)">
+              <span class="slider-val" id="logo-size-val">20%</span>
+            </div>
+          </div>
+
+          <div style="display:flex;flex-direction:column;gap:var(--s2)">
+            <div class="opt-label">Background Logo</div>
+            <div class="toggle-row">
+              <span style="font-size:var(--sm);color:var(--text-muted)">Padding putih di belakang logo</span>
+              <label class="toggle">
+                <input type="checkbox" id="logo-bg" checked onchange="scheduleRender()">
+                <div class="toggle-track"></div>
+                <div class="toggle-thumb"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SIZE CARD -->
+    <div class="card">
+      <div class="card-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/></svg>
+        Ukuran Output
+      </div>
+      <div class="opt-group">
+        <select id="qr-size">
+          <option value="200">Kecil (200×200 px)</option>
+          <option value="300" selected>Medium (300×300 px)</option>
+          <option value="400">Besar (400×400 px)</option>
+          <option value="600">XL (600×600 px)</option>
+          <option value="1000">Ultra HD (1000×1000 px)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn-primary" onclick="generateQR()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Generate QR
+      </button>
+      <button class="btn-secondary" onclick="clearAll()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+        Clear
+      </button>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL — PREVIEW -->
+  <div class="panel-right">
+    <div class="preview-card">
+      <div style="font-size:var(--xs);font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;align-self:flex-start">Preview</div>
+      <div class="qr-canvas-wrap">
+        <div id="qr-placeholder">
+          <svg width="72" height="72" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".35">
+            <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+            <rect x="3" y="14" width="7" height="7" rx="1"/>
+            <path d="M14 14h3v3h-3z"/><path d="M17 17h4v4h-4z"/><path d="M14 20v1"/><path d="M20 14v1"/>
+          </svg>
+          <p>QR Code muncul di sini</p>
+        </div>
+        <canvas id="qr-canvas" width="300" height="300"></canvas>
+      </div>
+
+      <div class="qr-meta-info" id="qr-meta" style="display:none">
+        <div class="qr-meta-label" id="qr-meta-label">-</div>
+        <div class="qr-meta-sub" id="qr-meta-sub">-</div>
+      </div>
+
+      <div class="download-btns" id="download-btns" style="display:none">
+        <button class="btn-primary" onclick="downloadQR()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Download PNG
+        </button>
+        <button class="btn-secondary" onclick="copyQR()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy PNG
+        </button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer><p>QR Generator Pro · Tidak ada data yang dikirim ke server · 100% Client-side</p></footer>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+// ─── THEME TOGGLE ────────────────────────────────────────────────
+(function(){
+  const t=document.querySelector('[data-theme-toggle]'),r=document.documentElement;
+  let d=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+  r.setAttribute('data-theme',d);setIcon(d);
+  t&&t.addEventListener('click',()=>{d=d==='dark'?'light':'dark';r.setAttribute('data-theme',d);setIcon(d)});
+  function setIcon(m){if(!t)return;t.innerHTML=m==='dark'?'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>':'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'}
+})();
+
+// ─── SECTION COLLAPSE ────────────────────────────────────────────
+function toggleSection(id){
+  const body=document.getElementById('body-'+id);
+  const chev=document.getElementById('chevron-'+id);
+  if(body.classList.contains('collapsed')){
+    body.style.maxHeight=body.scrollHeight+'px';body.style.opacity='1';body.classList.remove('collapsed');chev.classList.add('open');
+  } else {
+    body.style.maxHeight=body.scrollHeight+'px';requestAnimationFrame(()=>{body.style.maxHeight='0';body.style.opacity='0';body.classList.add('collapsed');chev.classList.remove('open')});
+  }
+}
+
+// ─── STATE ───────────────────────────────────────────────────────
+let currentShape='square', currentEye='square', logoImg=null, renderTimer=null;
+
+// ─── SHAPE / EYE PICKERS ─────────────────────────────────────────
+function setShape(s,btn){
+  currentShape=s;
+  document.querySelectorAll('.shape-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  scheduleRender();
+}
+function setEye(e,btn){
+  currentEye=e;
+  document.querySelectorAll('.eye-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  scheduleRender();
+}
+
+// ─── COLOR PICKERS ───────────────────────────────────────────────
+['qr-color','bg-color','grad-color1','grad-color2'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',function(){
+    const hexEl=document.getElementById(id+'-hex');
+    if(hexEl)hexEl.textContent=this.value;
+    updateGradientPreview();
+    scheduleRender();
+  });
+});
+document.getElementById('grad-direction').addEventListener('change',()=>{updateGradientPreview();scheduleRender()});
+document.getElementById('qr-size').addEventListener('change',scheduleRender);
+
+function toggleGradient(){
+  const on=document.getElementById('use-gradient').checked;
+  document.getElementById('gradient-section').style.display=on?'flex':'none';
+  document.getElementById('solid-color-section').style.opacity=on?'0.4':'1';
+  updateGradientPreview();
+  scheduleRender();
+}
+
+function updateGradientPreview(){
+  const c1=document.getElementById('grad-color1').value;
+  const c2=document.getElementById('grad-color2').value;
+  const dir=document.getElementById('grad-direction').value;
+  const preview=document.getElementById('gradient-preview');
+  const angles={lr:'to right',tb:'to bottom',diag:'135deg'};
+  if(dir==='radial') preview.style.background=`radial-gradient(circle, ${c1}, ${c2})`;
+  else preview.style.background=`linear-gradient(${angles[dir]||'to right'}, ${c1}, ${c2})`;
+}
+updateGradientPreview();
+
+// ─── LOGO UPLOAD ─────────────────────────────────────────────────
+function handleLogoUpload(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      logoImg=img;
+      document.getElementById('logo-thumb').src=ev.target.result;
+      document.getElementById('logo-filename').textContent=file.name;
+      document.getElementById('logo-preview-wrap').style.display='block';
+      document.getElementById('logo-size-section').style.display='flex';
+      document.getElementById('logo-upload-area').classList.add('has-logo');
+      document.getElementById('upload-text').textContent='Ganti logo';
+      scheduleRender();
+    };
+    img.src=ev.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+function removeLogo(){
+  logoImg=null;
+  document.getElementById('logo-file').value='';
+  document.getElementById('logo-preview-wrap').style.display='none';
+  document.getElementById('logo-size-section').style.display='none';
+  document.getElementById('logo-upload-area').classList.remove('has-logo');
+  document.getElementById('upload-text').textContent='Klik untuk upload logo';
+  scheduleRender();
+}
+function updateLogoSize(v){
+  document.getElementById('logo-size-val').textContent=v+'%';
+  scheduleRender();
+}
+
+// ─── CHAR COUNT ──────────────────────────────────────────────────
+document.getElementById('qr-input').addEventListener('input',function(){
+  const l=this.value.length;
+  const el=document.getElementById('char-count');
+  el.textContent=l+' / 2000 karakter';
+  el.classList.toggle('warn',l>1800);
+  scheduleRender();
+});
+
+// ─── SCHEDULE RENDER ─────────────────────────────────────────────
+function scheduleRender(){
+  clearTimeout(renderTimer);
+  renderTimer=setTimeout(()=>{if(document.getElementById('qr-input').value.trim())generateQR();},300);
+}
+
+// ─── QR MATRIX via qr-creator ─────────────────────────────────────
+function getQRMatrix(text, size){
+  // Use qr-creator to get module data via a hidden canvas
+  const tmp=document.createElement('canvas');
+  QrCreator.render({text,radius:0,ecLevel:'H',fill:'#000',background:'#fff',size:size},tmp);
+  return tmp;
+}
+
+// ─── DRAW SHAPE MODULE ───────────────────────────────────────────
+function drawModule(ctx, x, y, size, shape, color){
+  ctx.fillStyle=color;
+  const h=size*0.5, r=size*0.45;
+  switch(shape){
+    case 'dot':
+      ctx.beginPath();ctx.arc(x+h,y+h,r*0.85,0,Math.PI*2);ctx.fill();
+      break;
+    case 'rounded':
+      roundRect(ctx,x+1,y+1,size-2,size-2,size*0.3,color);
+      break;
+    case 'diamond':
+      ctx.beginPath();ctx.moveTo(x+h,y+1);ctx.lineTo(x+size-1,y+h);ctx.lineTo(x+h,y+size-1);ctx.lineTo(x+1,y+h);ctx.closePath();ctx.fill();
+      break;
+    case 'star':
+      drawStar(ctx,x+h,y+h,r*0.85,r*0.4,5,color);
+      break;
+    default: // square
+      ctx.fillRect(x,y,size,size);
+  }
+}
+
+function roundRect(ctx,x,y,w,h,r,color){
+  ctx.fillStyle=color;
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();ctx.fill();
+}
+
+function drawStar(ctx,cx,cy,ro,ri,pts,color){
+  ctx.fillStyle=color;ctx.beginPath();
+  const angle=Math.PI/pts;
+  for(let i=0;i<2*pts;i++){
+    const a=i*angle-Math.PI/2;
+    const r=i%2===0?ro:ri;
+    i===0?ctx.moveTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r):ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+  }
+  ctx.closePath();ctx.fill();
+}
+
+// ─── DRAW EYE ────────────────────────────────────────────────────
+function drawEye(ctx, x, y, cellSize, eyeStyle, color, bgColor){
+  const s=cellSize;
+  const ox=x*s, oy=y*s;
+  const outer=7*s, inner=5*s, innerOff=s, dotSize=3*s, dotOff=2*s;
+
+  ctx.fillStyle=bgColor;
+  ctx.fillRect(ox,oy,outer,outer);
+
+  switch(eyeStyle){
+    case 'circle':
+      // outer ring
+      ctx.fillStyle=color;ctx.beginPath();ctx.arc(ox+outer/2,oy+outer/2,outer/2,0,Math.PI*2);ctx.fill();
+      ctx.fillStyle=bgColor;ctx.beginPath();ctx.arc(ox+outer/2,oy+outer/2,inner/2,0,Math.PI*2);ctx.fill();
+      // dot
+      ctx.fillStyle=color;ctx.beginPath();ctx.arc(ox+outer/2,oy+outer/2,dotSize/2,0,Math.PI*2);ctx.fill();
+      break;
+    case 'rounded':
+      roundRect(ctx,ox,oy,outer,outer,s*1.5,color);
+      roundRect(ctx,ox+innerOff,oy+innerOff,inner,inner,s,bgColor);
+      roundRect(ctx,ox+dotOff,oy+dotOff,dotSize,dotSize,s*0.8,color);
+      break;
+    case 'leaf':
+      // outer: top-left & bottom-right rounded
+      ctx.fillStyle=color;
+      ctx.beginPath();ctx.moveTo(ox,oy+outer*0.4);ctx.quadraticCurveTo(ox,oy,ox+outer*0.4,oy);ctx.lineTo(ox+outer,oy);ctx.lineTo(ox+outer,oy+outer*0.6);ctx.quadraticCurveTo(ox+outer,oy+outer,ox+outer*0.6,oy+outer);ctx.lineTo(ox,oy+outer);ctx.closePath();ctx.fill();
+      ctx.fillStyle=bgColor;
+      ctx.beginPath();ctx.moveTo(ox+innerOff,oy+innerOff+inner*0.4);ctx.quadraticCurveTo(ox+innerOff,oy+innerOff,ox+innerOff+inner*0.4,oy+innerOff);ctx.lineTo(ox+innerOff+inner,oy+innerOff);ctx.lineTo(ox+innerOff+inner,oy+innerOff+inner*0.6);ctx.quadraticCurveTo(ox+innerOff+inner,oy+innerOff+inner,ox+innerOff+inner*0.6,oy+innerOff+inner);ctx.lineTo(ox+innerOff,oy+innerOff+inner);ctx.closePath();ctx.fill();
+      ctx.fillStyle=color;ctx.fillRect(ox+dotOff,oy+dotOff,dotSize,dotSize);
+      break;
+    default: // square
+      ctx.fillStyle=color;ctx.fillRect(ox,oy,outer,outer);
+      ctx.fillStyle=bgColor;ctx.fillRect(ox+innerOff,oy+innerOff,inner,inner);
+      ctx.fillStyle=color;ctx.fillRect(ox+dotOff,oy+dotOff,dotSize,dotSize);
+  }
+}
+
+// ─── MAIN GENERATE ───────────────────────────────────────────────
+function generateQR(){
+  const text=document.getElementById('qr-input').value.trim();
+  if(!text){showToast('⚠️ Masukkan teks dulu');return;}
+
+  const outputSize=parseInt(document.getElementById('qr-size').value);
+  const qrColor=document.getElementById('qr-color').value;
+  const bgColor=document.getElementById('bg-color').value;
+  const useGrad=document.getElementById('use-gradient').checked;
+  const gradC1=document.getElementById('grad-color1').value;
+  const gradC2=document.getElementById('grad-color2').value;
+  const gradDir=document.getElementById('grad-direction').value;
+  const logoSize=parseInt(document.getElementById('logo-size').value)/100;
+  const logoBg=document.getElementById('logo-bg').checked;
+
+  // 1) Get QR matrix using qr-creator on a temp canvas
+  const tmpCanvas=document.createElement('canvas');
+  const moduleCount=33; // will be determined dynamically
+  QrCreator.render({text,radius:0,ecLevel:'H',fill:'#000000',background:'#ffffff',size:500},tmpCanvas);
+
+  // Read pixel data to extract matrix
+  const tmpCtx=tmpCanvas.getContext('2d');
+  const imgData=tmpCtx.getImageData(0,0,500,500);
+  const pix=imgData.data;
+
+  // Detect module size by finding first black pixel
+  let firstBlack=-1;
+  for(let x=0;x<500;x++){
+    const idx=(x)*4;
+    if(pix[idx]<128){firstBlack=x;break;}
+  }
+  // Count modules: scan a row until white after first black
+  let mStart=firstBlack, mCount=0;
+  // Find module size by counting consecutive black pixels in first module
+  let mSize=0;
+  for(let x=mStart;x<500;x++){
+    if(pix[x*4]<128)mSize++;else break;
+  }
+  if(mSize<1)mSize=1;
+  const numModules=Math.round(500/mSize);
+  const pad=mStart;
+
+  // Extract boolean matrix
+  const matrix=[];
+  for(let r=0;r<numModules;r++){
+    matrix[r]=[];
+    for(let c=0;c<numModules;c++){
+      const px=Math.floor(pad+c*mSize+mSize/2);
+      const py=Math.floor(pad+r*mSize+mSize/2);
+      const idx=(py*500+px)*4;
+      matrix[r][c]=pix[idx]<128;
+    }
+  }
+
+  // 2) Draw onto output canvas
+  const canvas=document.getElementById('qr-canvas');
+  canvas.width=outputSize;
+  canvas.height=outputSize;
+  const ctx=canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle=bgColor;
+  ctx.fillRect(0,0,outputSize,outputSize);
+
+  const cellSize=outputSize/numModules;
+
+  // Build gradient if needed
+  let fillGrad=null;
+  if(useGrad){
+    if(gradDir==='radial'){
+      fillGrad=ctx.createRadialGradient(outputSize/2,outputSize/2,0,outputSize/2,outputSize/2,outputSize/2);
+    } else {
+      const angles={lr:[0,outputSize/2,outputSize,outputSize/2],tb:[outputSize/2,0,outputSize/2,outputSize],diag:[0,0,outputSize,outputSize]};
+      const a=angles[gradDir]||angles.lr;
+      fillGrad=ctx.createLinearGradient(...a);
+    }
+    fillGrad.addColorStop(0,gradC1);
+    fillGrad.addColorStop(1,gradC2);
+  }
+
+  // Identify eye positions (top-left, top-right, bottom-left)
+  const eyePositions=[[0,0],[0,numModules-7],[numModules-7,0]];
+  function isEyeModule(r,c){
+    return eyePositions.some(([er,ec])=>r>=er&&r<er+7&&c>=ec&&c<ec+7);
+  }
+
+  // 3) Draw eyes first
+  eyePositions.forEach(([er,ec])=>{
+    drawEye(ctx,ec,er,cellSize,currentEye,useGrad?gradC1:qrColor,bgColor);
+  });
+
+  // 4) Draw modules (skip eyes)
+  for(let r=0;r<numModules;r++){
+    for(let c=0;c<numModules;c++){
+      if(isEyeModule(r,c))continue;
+      if(!matrix[r][c])continue;
+      const x=c*cellSize, y=r*cellSize;
+      const color=fillGrad||qrColor;
+      drawModule(ctx,x,y,cellSize,currentShape,color);
+    }
+  }
+
+  // 5) Draw logo
+  if(logoImg){
+    const lSize=outputSize*logoSize;
+    const lx=(outputSize-lSize)/2;
+    const ly=(outputSize-lSize)/2;
+    if(logoBg){
+      const pad=lSize*0.15;
+      roundRect(ctx,lx-pad,ly-pad,lSize+pad*2,lSize+pad*2,lSize*0.15,'#ffffff');
+    }
+    ctx.drawImage(logoImg,lx,ly,lSize,lSize);
+  }
+
+  // Show result
+  document.getElementById('qr-placeholder').style.display='none';
+  canvas.style.display='block';
+  canvas.style.maxWidth='100%';
+
+  document.getElementById('download-btns').style.display='grid';
+  const metaEl=document.getElementById('qr-meta');
+  metaEl.style.display='flex';
+  const label=text.length>40?text.substring(0,40)+'...':text;
+  document.getElementById('qr-meta-label').textContent=label;
+  document.getElementById('qr-meta-sub').textContent=`${text.length} karakter · ${outputSize}×${outputSize}px · ${numModules} modul`;
+}
+
+// ─── CLEAR ───────────────────────────────────────────────────────
+function clearAll(){
+  document.getElementById('qr-input').value='';
+  document.getElementById('char-count').textContent='0 / 2000 karakter';
+  document.getElementById('char-count').classList.remove('warn');
+  const canvas=document.getElementById('qr-canvas');
+  canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+  canvas.style.display='none';
+  document.getElementById('qr-placeholder').style.display='flex';
+  document.getElementById('download-btns').style.display='none';
+  document.getElementById('qr-meta').style.display='none';
+  document.getElementById('qr-input').focus();
+}
+
+// ─── DOWNLOAD & COPY ─────────────────────────────────────────────
+function downloadQR(){
+  const canvas=document.getElementById('qr-canvas');
+  if(canvas.style.display==='none'){showToast('Generate dulu!');return;}
+  const text=document.getElementById('qr-input').value.trim().substring(0,20).replace(/[^a-zA-Z0-9]/g,'_')||'qrcode';
+  const a=document.createElement('a');
+  a.download=`qr_${text}_${document.getElementById('qr-size').value}px.png`;
+  a.href=canvas.toDataURL('image/png');
+  a.click();
+  showToast('✅ Berhasil diunduh!');
+}
+async function copyQR(){
+  const canvas=document.getElementById('qr-canvas');
+  if(canvas.style.display==='none'){showToast('Generate dulu!');return;}
+  canvas.toBlob(async b=>{
+    try{await navigator.clipboard.write([new ClipboardItem({'image/png':b})]);showToast('✅ Disalin ke clipboard!')}
+    catch{showToast('⚠️ Browser tidak support copy gambar')}
+  });
+}
+
+// ─── TOAST ───────────────────────────────────────────────────────
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ─── KEYBOARD SHORTCUT ───────────────────────────────────────────
+document.addEventListener('keydown',e=>{if(e.ctrlKey&&e.key==='Enter')generateQR()});
+</script>
+</body>
+</html>
