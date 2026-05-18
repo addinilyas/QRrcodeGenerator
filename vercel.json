@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "/", "destination": "/qr-generator-v2.html" }
+    { "source": "/", "destination": "/index.html" }
   ]
 }
